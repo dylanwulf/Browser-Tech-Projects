@@ -1,0 +1,90 @@
+<!--Dylan Wulf
+    Project 4
+    CSC 470-03
+    May 8, 2016
+    This page allows the user to apply a median filter to an image, 
+    selecting the number of web workers used (1-8).
+-->
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Dylan Wulf Project 4</title>
+    <script type="text/javascript">
+        (function() { //Begin IIFE
+            //This function runs when the window finishes loading
+            var setup = function() {
+                //Get canvas and context
+                var cvs = document.getElementById("cvs");
+                var ctx = cvs.getContext("2d");
+                var btn = document.getElementById("btn"); //get button
+                var rng = document.getElementById("rng"); //get num workers
+                //Make the number box update when the range input changes
+                rng.onmousemove = rng.onclick = function() {
+                    document.getElementById("nmb").value = rng.value;
+                };
+                
+                //this function gets called when the button is pressed
+                var buttonCallback = function() {
+                    //keep track of the workers
+                    var finishedWorkers = 0;
+                    var workers = [];
+                    //create the workers
+                    for (var i = 0; i < rng.value; i++) {
+                        workers[i] = new Worker("medianProcessor.js");
+                    }
+                    //record start time
+                    var startTime = new Date().getTime();
+                    var strip_height = Math.ceil(cvs.height / rng.value);
+                    for (var j = 0; j < workers.length; j++) {
+                        //for each worker, get the image data
+                        var imgData = ctx.getImageData(0, j*strip_height, cvs.width, strip_height + 2);
+                        //and create an empty image data object to put the new values into
+                        var emptyImgData = ctx.createImageData(cvs.width - 2, strip_height);
+                        //put it all in an object to send to the worker
+                        var message = {imgData: imgData, emptyImgData: emptyImgData, x: 1, y: j*strip_height+1, workerNum: j};
+                        //post the message and set the function to run when it responds
+                        workers[j].postMessage(message);
+                        workers[j].onmessage = function(e) {
+                            //get the data out
+                            var newIData = e.data.imgData;
+                            var x = e.data.x;
+                            var y = e.data.y;
+                            //put it on the canvas
+                            ctx.putImageData(newIData, x, y);
+                            //terminate the worker when finished
+                            workers[e.data.workerNum].terminate();
+                            finishedWorkers++; //when all workers are done, update the time
+                            if (finishedWorkers === workers.length) {
+                                var endTime = new Date().getTime();
+                                document.getElementById("timeBox").value = endTime - startTime;
+                            }
+                        }
+                    }
+                };
+                
+                //Loading the image as soon as window finishes loading
+                var coinImg = new Image();
+                coinImg.src = "coins.jpg";
+                //When the image finishes loading...
+                coinImg.onload = function(e) {
+                    cvs.width = coinImg.width; //set width and height of canvas
+                    cvs.height = coinImg.height;
+                    ctx.drawImage(coinImg, 0, 0); //draw the image to the canvas
+                    btn.onclick = buttonCallback; //set the button's callback function
+                    //(this way the button doesn't do anything until after the image loads)
+                };
+            };
+            window.onload = setup; //set window onload handler to the setup function (above)
+        })(); //End IIFE
+    </script>
+  </head>
+  <body>
+    <input type="button" id="btn" value="Apply filter!"></input>
+    Number of workers (threads):<input type="range" id="rng" min="1" max="8" value="1"></input>
+    <input type="text" id="nmb" value="1" size="1" disabled="true"></input>
+    Time taken (ms): <input type="text" id="timeBox" disabled="true"></input>
+    <br />
+    <canvas id="cvs" style="border-style: solid;"></canvas>
+  </body>
+</html>

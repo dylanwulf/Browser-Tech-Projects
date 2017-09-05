@@ -1,0 +1,308 @@
+<!--
+Dylan Wulf
+March 20, 2016
+CSC 470-03
+Project 02
+Filename: DylanWulf_Project02.html
+Description: A color matching game built using JavaScript functions, objects, events
+When the page loads, a 10x10 grid of colored circles will appear. After 3 seconds, they will
+flip over and the user can begin matching them using mouse clicks.
+-->
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Dylan's Color Matching Game</title>
+        <script type="text/javascript"><!--begin huge script tag-->
+            (function(){ //begin IIFE
+                //necessary to make svg tags using javascript
+                var svgNS = "http://www.w3.org/2000/svg";
+                var state = "beginning" //other states: "0 flipped", "1 flipped", "2 flipped"
+                var flippedCircle1 = null; //placeholders for circles that get clicked on
+                var flippedCircle2 = null;
+                var circles; //array to hold circle objects
+                var linesR = 180; //color values for grid lines
+                var linesG = 180;
+                var linesB = 180;
+                
+                //This function creates the svg tag and grid lines, and returns an object
+                //containing the svg element object and a function to calculate circle positions
+                var makeGrid = function(width, height, rows, cols, lineColor, lineWidth) {
+                    var cols = cols || 10; //Set defaults if no argument provided
+                    var rows = rows || 10;
+                    var lineWidth = lineWidth || 5;
+                    var lineColor = lineColor || "rgb(180, 180, 180)";
+                    var svg = document.createElementNS(svgNS, "svg"); //create svg tag and set attributes
+                    svg.setAttribute("width", width);
+                    svg.setAttribute("height", height);
+                    document.body.appendChild(svg); //append it to the body
+                    //the lines' coords are in the middle of the line, so 
+                    //half of the first line and half of the
+                    //last line are cut off. To fix it, draw the lines in a slightly
+                    //smaller area than is actually available.
+                    var effectiveWidth = width - lineWidth;
+                    var effectiveHeight = height - lineWidth;
+                    //Draw vertical lines
+                    for (var i = 0; i < cols + 1; i++) { //add one because columns are the spaces between lines
+                        var line = document.createElementNS(svgNS, "line");
+                        //corners look weird without this. other possible values: "butt" (default), "round"
+                        line.setAttribute("stroke-linecap", "square"); 
+                        //Calculate coordinates for each line
+                        line.setAttribute("x1", Math.floor(effectiveWidth / cols * i) + lineWidth / 2);
+                        line.setAttribute("x2", Math.floor(effectiveWidth / cols * i) + lineWidth / 2);
+                        line.setAttribute("y1", 0);
+                        line.setAttribute("y2", effectiveHeight + lineWidth / 2);
+                        line.style.stroke = lineColor;
+                        line.style.strokeWidth = lineWidth.toString();
+                        svg.appendChild(line); //add each line to the svg tag
+                    }
+                    //draw horizontal lines
+                    //Basically the same thing as above except horizontal
+                    for (var i = 0; i < rows + 1; i++) {
+                        var line = document.createElementNS(svgNS, "line");
+                        line.setAttribute("stroke-linecap", "square"); 
+                        line.setAttribute("y1", Math.floor(effectiveHeight / rows * i) + lineWidth / 2);
+                        line.setAttribute("y2", Math.floor(effectiveHeight / rows * i) + lineWidth / 2);
+                        line.setAttribute("x1", 0);
+                        line.setAttribute("x2", effectiveWidth + lineWidth / 2);
+                        line.style.stroke = lineColor;
+                        line.style.strokeWidth = lineWidth.toString();
+                        svg.appendChild(line);
+                    }
+                    
+                    //Make a function to calculate a circle's x and y coords according to its row and column
+                    var calcPosition = function(row, col) {
+                        var xPos = effectiveWidth / cols * col + lineWidth / 2 - (effectiveWidth / cols / 2);
+                        var yPos = effectiveHeight / rows * row + lineWidth / 2 - (effectiveHeight / rows / 2);
+                        return {xPos:xPos, yPos:yPos};
+                    };
+                    
+                    //Return an object with svg object and calcPosition function
+                    return {SVGElement:svg, calcPosition:calcPosition};
+                };
+                
+                //This function makes a circle element to display on the page
+                //and returns an object with information about the circle
+                var makeCircle = function(grid, row, col, r, color) {
+                    var row = row || 1; //set defaults
+                    var col = col || 1;
+                    var r = r || 10;
+                    var color = color || "black";
+                    var faceUp = true;
+                    //using ellipse instead of circle because we're going to animate :)
+                    var circle = document.createElementNS(svgNS, "ellipse");
+                    var coords = grid.calcPosition(row, col);
+                    circle.setAttribute("cx", coords.xPos); //set attributes of ellipse element
+                    circle.setAttribute("cy", coords.yPos); //so it displays properly
+                    circle.setAttribute("rx", r);
+                    circle.setAttribute("ry", r);
+                    circle.setAttribute("stroke-width", 0);
+                    circle.setAttribute("stroke", "black");
+                    circle.setAttribute("fill", color);
+                    grid.SVGElement.appendChild(circle); //append to the svg element
+                    
+                    //This function gets called any time a circle gets clicked on
+                    var clickListener = function() {
+                        circleClickFunc(row, col);
+                    }
+                    circle.addEventListener("click", clickListener); //set as the onclick listener
+                    
+                    //This function flips the circle over
+                    //What it actually does is reduce the ellipse's x-radius to 0, 
+                    //change the color, then restore the x-radius to its normal value
+                    var flip = function() {
+                        var start = null; //holds start time of animation
+                        var length = 350; //length of animation in ms
+                        if (faceUp == true) { //if it's currently face up, we're gonna flip it down
+                            faceUp = false;
+                            var flipDown = function(timestamp) { //callback function for animation
+                                start = start || timestamp; //initialize start
+                                var timePassed = timestamp - start;
+                                var progress = Math.abs(-1 + timePassed / length * 2); //progress goes from 1 to 0 and back to 1
+                                if (timePassed >= length / 2) { //if we're halfway through, set color to white and add stroke
+                                    circle.setAttribute("stroke-width", 2);
+                                    circle.setAttribute("fill", "white");
+                                }
+                                if (timePassed < length) { //Continue animating until we're done.
+                                    circle.setAttribute("rx", r * progress);
+                                    requestAnimationFrame(flipDown);
+                                }
+                                //have to set the value back at the end because
+                                //the animation doesn't always end exactly where it began
+                                else 
+                                    circle.setAttribute("rx", r);
+                            };
+                            requestAnimationFrame(flipDown); //kickstart the animation
+                        }
+                        else { //if currently face down, we're flipping it face up
+                            faceUp = true; //this is all exactly the same as above, except filling it with color and removing stroke
+                            var flipUp = function(timestamp) {
+                                start = start || timestamp;
+                                var timePassed = timestamp - start;
+                                var progress = Math.abs(-1 + timePassed / length * 2);
+                                if (timePassed >= length / 2) {
+                                    circle.setAttribute("stroke-width", 0);
+                                    circle.setAttribute("fill", color);
+                                }
+                                if (timePassed < length) {
+                                    circle.setAttribute("rx", r * progress);
+                                    requestAnimationFrame(flipUp);
+                                }
+                                else
+                                    circle.setAttribute("rx", r);
+                            };
+                            requestAnimationFrame(flipUp);
+                        }
+                    };
+                    
+                    //Function to remove the event listener when the circle has been matched
+                    var removeListener = function() {
+                        circle.removeEventListener("click", clickListener);
+                    };
+                    //return an object with the circle's color, the flip function, and remove listener function
+                    return {color:color, flip:flip, removeListener:removeListener};
+                };
+                
+                //This gets called by the circle's event handler.
+                //most of the game logic is in here
+                var circleClickFunc = function(row, col) {
+                    if (state === "0 flipped") { //if none selected, flip the one we clicked on and change state
+                        state = "1 flipped";
+                        flippedCircle1 = circles[(row-1)*10 + (col-1)];
+                        flippedCircle1.flip();
+                    }
+                    //if one has already been selected and we clicked on a different one (not the same one)
+                    //we change the state and compare the two.
+                    //if the colors are different, they are flipped back over after a 1 second delay
+                    //during which we can't click on any other circles
+                    else if (state === "1 flipped"  && circles[(row-1)*10 + (col-1)] !== flippedCircle1) {
+                        state = "2 flipped";
+                        flippedCircle2 = circles[(row-1)*10 + (col-1)];
+                        flippedCircle2.flip();
+                        if (flippedCircle1.color === flippedCircle2.color) {//if they match
+                            flash("green");
+                            flippedCircle1.removeListener();//remove listeners for the matching circles
+                            flippedCircle1 = null;
+                            flippedCircle2.removeListener();
+                            flippedCircle2 = null;
+                            state = "0 flipped"; //set state back to 0 so we can click again
+                        }
+                        else { //if they don't match
+                            flash("red");
+                            setTimeout(function(){ //flip them after a timeout of 1000 ms
+                                flippedCircle1.flip();
+                                flippedCircle1 = null;
+                                flippedCircle2.flip();
+                                flippedCircle2 = null;
+                                state = "0 flipped"; //dont set state back to 0 until flipped back over
+                            }, 1000);
+                        }
+                    }
+                };
+                
+                //Flashes the lines green or red
+                var flash = function(color) {
+                    var lines = document.getElementsByTagName("line"); //get all lines
+                    var start = null; //holds starting time
+                    var length = 1000; //length of animation in ms
+                    
+                    var green = function(timestamp) { //animation callback function for a green flash
+                        start = start || timestamp; //initiate start
+                        var timePassed = timestamp - start;
+                        var progress = Math.abs(-1 + timePassed / length * 2); //goes from 1 to 0 and back to 1
+                        var r = Math.floor(linesR*progress); //red goes from default value down to 0 then back to default
+                        var g = linesG + Math.floor((180-linesG) * (1 - progress)); //green goes from default value up to 180 then back to default
+                        var b = Math.floor(linesB*progress); //blue goes from default down to 0 then back to default
+                        if (timePassed < length) { //keep going until animation is finished
+                            for (var i = 0; i < lines.length; i++) {
+                                lines[i].style.stroke = "rgb(" + r + ", " + g + ", " + b + ")";
+                            }
+                            requestAnimationFrame(green);
+                        }
+                        else { //when finished, make sure everything has the values they're supposed to have
+                            for (var i = 0; i < lines.length; i++) {
+                                lines[i].style.stroke = "rgb(" + linesR + ", " + linesG + ", " + linesB + ")";
+                            }
+                        }
+                    };
+                    
+                    //animation callback function for a red flash.
+                    //exactly the same as green (above), except flashes red instead of green
+                    var red = function(timestamp) {
+                        start = start || timestamp;
+                        var timePassed = timestamp - start;
+                        var progress = Math.abs(-1 + timePassed / length * 2);
+                        var r = linesR + Math.floor((180-linesR) * (1 - progress));
+                        var g = Math.floor(linesG*progress);
+                        var b = Math.floor(linesB*progress);
+                        if (timePassed < length) {
+                            for (var i = 0; i < lines.length; i++) {
+                                lines[i].style.stroke = "rgb(" + r + ", " + g + ", " + b + ")";
+                            }
+                            requestAnimationFrame(red);
+                        }
+                        else {
+                            for (var i = 0; i < lines.length; i++) {
+                                lines[i].style.stroke = "rgb(" + linesR + ", " + linesG + ", " + linesB + ")";
+                            }
+                        }
+                    };
+                    
+                    //Kickstart the animation, choosing which one to use
+                    if (color === "green")
+                        requestAnimationFrame(green);
+                    else if (color === "red")
+                        requestAnimationFrame(red);
+                };
+                
+                //Randomly shuffle an array of values
+                var shuffleArray = function(array) {
+                    for (var i = 0; i < array.length; i++) {
+                        var r = i + Math.floor(Math.random() * (array.length - i));
+                        var temp = array[i];
+                        array[i] = array[r];
+                        array[r] = temp;
+                    }
+                }
+                
+                //Sets everything up when the page loads
+                var setup = function() {
+                    alert("You have 3 seconds to memorize. Go!");
+                    var rows = 10;
+                    var cols = 10; //makeGrid function is defined above
+                    var grid = makeGrid(500, 500, rows, cols, "rgb(" + linesR + "," + linesG + "," + linesB + ")");
+                    var possibleColors = ["red", "green", "purple", "blue", "yellow", "orange"];
+                    var randomColors = Array(rows * cols); //array to hold random color pairs
+                    //First we make pairs of random colors, selected from possibleColors
+                    //(making pairs to make sure every circle has a match)
+                    for (var i = 0; i < randomColors.length; i += 2) {
+                        var selectedColor = possibleColors[Math.floor(Math.random()*possibleColors.length)];
+                        randomColors[i] = selectedColor;
+                        randomColors[i + 1] = selectedColor;
+                    }
+                    //Then we shuffle the array so the pairs get separated
+                    shuffleArray(randomColors);
+                    
+                    //Then we make the actual circles according to the colors in the randomColors array
+                    circles = Array(randomColors.length);
+                    for (var i = 0; i < circles.length; i++) {
+                        var row = Math.floor(i / cols) + 1; //adding one because the rows and cols go from 1-10, not 0-9
+                        var col = (i % cols) + 1;
+                        circles[i] = makeCircle(grid, row, col, 15, randomColors[i]); //15 is the radius
+                    }
+                    //When the page first loads, show all the colors.
+                    //After a time of 3 seconds (3000 ms), flip everything over and start the game.
+                    setTimeout(function() {
+                        for (var i = 0; i < circles.length; i++)
+                            circles[i].flip();
+                        state = "0 flipped"; //can't click anything until after they're all flipped over
+                    }, 3000);
+                };
+                window.onload = setup; //When the window finishes loading, call the setup() function.
+            })();//end IIFE
+        </script>
+    </head>
+    <body><!--tiny body-->
+        
+    </body>
+</html>

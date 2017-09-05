@@ -1,0 +1,117 @@
+<!--Dylan Wulf
+    Project 3
+    CSC 470-03
+    April 17, 2016
+    This html file draws a night scene with a house using the shapes.js file
+-->
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Dylan Wulf Project 3</title>
+    <script type="text/javascript" src="shapes.js"></script>
+    <script type="text/javascript">
+    (function() { //begin IIFE
+        var drawTest = function() {
+            var canvas = document.getElementById("cvs"); //get canvas element
+            var ctx = canvas.getContext("2d"); //get drawing context
+            //Draw sky
+            var skyRect = new Rectangle(0, 0, canvas.width, canvas.height / 2);
+            skyRect.strokeStyle = undefined; //no stroke
+            skyRect.fillStyle = "#000040"; //very dark blue
+            skyRect.draw(ctx);
+            
+            //draw grass
+            var grassRect = new Rectangle(0, canvas.height / 2, canvas.width, canvas.height);
+            grassRect.strokeStyle = undefined; //no stroke
+            grassRect.fillStyle = "#032400"; //very dark green
+            grassRect.draw(ctx);
+            
+            //draw the bright part of the moon
+            var moonBright = new Ellipse(50, 50, 50, 50);
+            moonBright.strokeStyle = undefined; //no stroke
+            moonBright.fillStyle = "#FBFFA6"; //Light yellow
+            moonBright.draw(ctx);
+            
+            //cut out a part of the moon by drawing a circle the same color as the sky
+            var moonDark = new Ellipse(80, 50, 50, 50);
+            moonDark.strokeStyle = undefined; //no stroke
+            moonDark.fillStyle = "#000040"; //same color as sky
+            moonDark.draw(ctx);
+            
+            //let's draw some randomly placed stars
+            for (var i = 0; i < 30; i++) {
+                var starX = Math.ceil(Math.random() * canvas.width + 100);
+                var starY = Math.ceil(Math.random() * (canvas.height / 2 - 40) + 20);
+                var star = new Star(starX, starY, 20, 5);
+                star.strokeStyle = undefined; //no stroke
+                star.fillStyle = "#F7FF4F"; //yellower than moon
+                star.draw(ctx);
+            }
+            
+            //the main house rectangle
+            var houseRect = new Rectangle(150, 200, 300, 300);
+            houseRect.fillStyle = "#370000"; //dark red
+            houseRect.draw(ctx);
+            
+            //Drawing the roof of the house
+            //translations and scales make the roof half as tall
+            //as it is wide
+            ctx.translate(300, 150);
+            ctx.scale(1, 0.5);
+            var roof = new Polygon(0, 0, 200, 3);
+            roof.fillStyle = "#170000"; //very very dark red
+            roof.draw(ctx);
+            ctx.scale(1, 2);
+            ctx.translate(-300, -150);
+            
+            //Left window
+            var window1 = new Rectangle(175, 225, 100, 100);
+            window1.fillStyle = "#F7FF4F"; //same color as stars
+            window1.draw(ctx);
+            
+            //right window
+            var window2 = new Rectangle(325, 225, 100, 100);
+            window2.fillStyle = "#F7FF4F";
+            window2.draw(ctx);
+            
+            //left vertical line
+            var windowLine1 = new Line(225, 225, 225, 325);
+            windowLine1.strokeStyle = "#626200"; //dark yellow
+            windowLine1.draw(ctx);
+            
+            //left horizontal line
+            var windowLine2 = new Line(175, 275, 275, 275);
+            windowLine2.strokeStyle = "#626200"; //dark yellow
+            windowLine2.draw(ctx);
+            
+            //right vertical line
+            var windowLine3 = new Line(375, 225, 375, 325);
+            windowLine3.strokeStyle = "#626200"; //dark yellow
+            windowLine3.draw(ctx);
+            
+            //right horizontal line
+            var windowLine4 = new Line(325, 275, 425, 275);
+            windowLine4.strokeStyle = "#626200"; //dark yellow
+            windowLine4.draw(ctx);
+            
+            var door = new Rectangle(265, 400, 70, 100);
+            door.fillStyle = "#4D4800"; //dark yellow
+            door.draw(ctx);
+            
+            var doorWindow = new Ellipse(300, 425, 25, 15);
+            doorWindow.fillStyle = "#F7FF4F"; //same as window fill
+            doorWindow.draw(ctx);
+            
+            var doorHandle = new Ellipse(325, 455, 5, 5);
+            doorHandle.fillStyle = "#2B2700"; //very very dark yellow
+            doorHandle.draw(ctx);
+        };
+        window.onload = drawTest;
+    })(); //end IIFE
+    </script>
+  </head>
+  <body>
+    <canvas id="cvs" width="600" height="600" style="border-style: solid;"></canvas>
+  </body>
+</html>
