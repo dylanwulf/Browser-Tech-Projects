@@ -1,0 +1,84 @@
+<!-- Dylan Wulf
+   CSC 470-03
+   April 7, 2016
+   Purpose: Create canvas element and 2d drawing context, 
+            Create and draw canvas path made of straight lines, 
+            Handle click events on a canvas.
+-->
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Dylan Wulf Lab 08</title>
+    <script type="text/javascript">
+      (function() { //Begin IIFE
+        
+        //This function draws a star according to the specified parameters
+        var drawStar = function(cx, cy, radius, npoints, ctx) {
+          //Get fill color from color selector
+          ctx.fillStyle = document.getElementById("starColor").value;
+          //Inner radius is half the outer radius
+          var innerR = 0.5 * radius;
+          //Each point is theta radians farther around the circle than the last point
+          var theta = Math.PI * 2 / (npoints * 2);
+          //Let's start drawing!
+          ctx.beginPath();
+          for (var i = 0; i < npoints * 2; i++) {
+            var r = (i % 2 === 0)? radius : innerR; //alternate between inner and outer radius
+            //Trace a line to the next point
+            //I subtract PI/2 so that it starts at the top of the star instead of the right side
+            ctx.lineTo(r * Math.cos(i * theta - Math.PI / 2) + cx, r * Math.sin(i * theta - Math.PI / 2) + cy);
+          }
+          ctx.closePath(); //Draw the last line in the star and close the path
+          ctx.stroke(); //Draw the outline
+          ctx.fill(); //Fill with color
+        };
+        
+        //This function sets everything up when the window loads
+        var setup = function() {
+          var canvas = document.getElementById("cvs"); //get canvas element
+          var ctx = canvas.getContext("2d"); //get drawing context
+          var clickFunc = function(evt) { //What to do when the canvas is clicked on
+            var rect = canvas.getBoundingClientRect();
+            var cx = evt.clientX - rect.left; //Get the relative x and y coords
+            var cy = evt.clientY - rect.top;
+            var numPoints = document.getElementById("numPoints").value; //get values from html selectors
+            var starSize = document.getElementById("starSize").value;
+            drawStar(cx, cy, starSize, numPoints, ctx); //Draw the star when the canvas is clicked on
+          };
+          canvas.onclick = clickFunc; //set the above function to be the canvas onclick handler
+          document.getElementById("resetBtn").onclick = function() { //set onclick handler for the reset button
+            ctx.clearRect(0, 0, canvas.width, canvas.height); //clear canvas
+            document.getElementById("starColor").value = "#fff000"; //reset color to default
+            document.getElementById("numPoints").value = "5"; //reset number of points to default
+            document.getElementById("starSize").value = "35"; //reset star size to default
+          };
+        };
+        window.onload = setup; //call setup function when done loading
+      })(); //End IIFE
+    </script>
+  </head>
+  <body>
+    <canvas id="cvs" width="600" height="600" style="border-style: solid;"></canvas>
+    <br />
+    Number of points: 
+    <select id="numPoints">
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5" selected >5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+      <option value="8">8</option>
+      <option value="9">9</option>
+      <option value="10">10</option>
+    </select>
+    <br />
+    Color: 
+    <input id="starColor" type="color" value="#fff000" />
+    <br />
+    Star Size: 
+    <input type="range" id="starSize" min="10" max="100" value="35" />
+    <br />
+    <input type="button" id="resetBtn" value="Reset" />
+  </body>
+</html>
