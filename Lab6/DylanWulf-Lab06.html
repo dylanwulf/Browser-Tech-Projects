@@ -1,0 +1,115 @@
+<!--
+Dylan Wulf
+CSC 470-03
+March 27, 2016
+Lab 6: SVG practice
+-->
+<html>
+    <head>
+        <title>Dylan Wulf Lab 6</title>
+        <script type="text/javascript" src="snap.svg-min.js"></script>
+        <script type="text/javascript">
+            (function() { //begin IIFE
+                var setup = function() {
+                    var svg = Snap("#svg");
+                    
+                    //Make the first circle (Google)
+                    //First make red circle
+                    var circle1 = svg.circle(100, 100, 50);
+                    circle1.attr({fill: "red", stroke: "black", strokeWidth: "2px"});
+                    
+                    //Next, make "Google" text and place on top of red circle
+                    var text1 = svg.text(50, 110, "Google");
+                    text1.attr({fill: "white", "font-size": "32px"});
+                    
+                    //Make an invisible cover circle to receive events
+                    //otherwise we'd get hover events every time the mouse goes between
+                    //the circle and the text, which we don't want
+                    var circle1Cover = svg.circle(100, 100, 50);
+                    circle1Cover.attr({opacity: 0.0}); //make it invisible
+                    //set up hover functions
+                    circle1Cover.hover(function() {
+                        //on mouseover, make it bigger, circle->white, text->red
+                        circle1.animate({fill: "white", r: 75}, 350, mina.easein);
+                        text1.animate({fill: "red"}, 350, mina.easein);
+                        circle1Cover.animate({r: 75}, 350, mina.easein);
+                    }, function() {
+                        //on mouseout, reverse changes
+                        circle1.animate({fill: "red", r: 50}, 350, mina.easein);
+                        text1.animate({fill: "white"}, 350, mina.easein);
+                        circle1Cover.animate({r: 50}, 350, mina.easein);
+                    });
+                    //set up onclick handler to bring you to Google
+                    circle1Cover.click(function() {
+                        document.location = "http://www.google.com/";
+                    });
+                    
+                    //Make second circle (Bing)
+                    //First make blue circle
+                    var circle2 = svg.circle(250, 100, 50);
+                    circle2.attr({fill: "blue", stroke: "black", strokeWidth: "2px"});
+                    
+                    //Next make "Bing" text on top of circle
+                    var text2 = svg.text(218, 110, "Bing");
+                    text2.attr({fill: "white", "font-size": "32px"});
+                    
+                    //Make cover circle to receive events
+                    var circle2Cover = svg.circle(250, 100, 50);
+                    circle2Cover.attr({opacity: 0.0}); //invisible
+                    //set up hover functions
+                    circle2Cover.hover(function() {
+                        //on mouseover, circle->bigger, circle->white, text->blue
+                        circle2.animate({fill: "white", r: 75}, 350, mina.easein);
+                        text2.animate({fill: "blue"}, 350, mina.easein);
+                        circle2Cover.animate({r: 75}, 350, mina.easein);
+                    }, function() {
+                        //on mouseout, reverse those changes
+                        circle2.animate({fill: "blue", r: 50}, 350, mina.easein);
+                        text2.animate({fill: "white"}, 350, mina.easein);
+                        circle2Cover.animate({r: 50}, 350, mina.easein);
+                    });
+                    
+                    //set up onclick handler to bring you to Bing
+                    circle2Cover.click(function() {
+                        document.location = "http://www.bing.com/";
+                    });
+                    
+                    //Make third circle (DDG)
+                    //First make green circle
+                    var circle3 = svg.circle(400, 100, 50);
+                    circle3.attr({fill: "green", stroke: "black", strokeWidth: "2px"});
+                    
+                    //Make "DDG" text on top of circle
+                    var text3 = svg.text(365, 110, "DDG");
+                    text3.attr({fill: "white", "font-size": "32px"});
+                    
+                    //Make cover circle to receive events
+                    var circle3Cover = svg.circle(400, 100, 50);
+                    circle3Cover.attr({opacity: 0.0}); //invisible
+                    //Set up hover events
+                    circle3Cover.hover(function() {
+                        //On mouseover, circle->bigger, circle->white, text->green
+                        circle3.animate({fill: "white", r: 75}, 350, mina.easein);
+                        text3.animate({fill: "green"}, 350, mina.easein);
+                        circle3Cover.animate({r: 75}, 350, mina.easein);
+                    }, function() {
+                        //On mouseout, reverse those changes
+                        circle3.animate({fill: "green", r: 50}, 350, mina.easein);
+                        text3.animate({fill: "white"}, 350, mina.easein);
+                        circle3Cover.animate({r: 50}, 350, mina.easein);
+                    });
+                    //Set up onclick handler to bring you to DDG
+                    circle3Cover.click(function() {
+                        document.location = "http://www.duckduckgo.com/";
+                    });
+                };
+                window.onload = setup; //call setup function when finished loading
+            })(); //end IIFE
+        </script>
+    </head>
+    <body>
+        <!--svg tag where things will be placed-->
+        <svg width="500" height="200" id="svg" />
+    </body>
+    
+</html>
